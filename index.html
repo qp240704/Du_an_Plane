@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight - Travel and Tour</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/tooplate-style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <section class="banner" id="top">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="submit-form">
+                        <h4>Search Flights:</h4>
+                        <form id="search-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="from">From:</label>
+                                    <select id="from" class="form-control" required>
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="to">To:</label>
+                                    <select id="to" class="form-control" required>
+                                        <option value="">Loading...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="departure">Departure Date:</label>
+                                    <input type="date" id="departure" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="return">Return Date:</label>
+                                    <input type="date" id="return" class="form-control">
+                                </div>
+                                <div class="col-md-12">
+                                    <button type="submit" class="btn btn-primary btn-block">Search Flights</button>
+                                </div>
+                            </div>
+                        </form>
+                        <div id="result" style="margin-top: 20px;">
+                            <!-- API results will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        async function loadAirports() {
+            try {
+                const response = await axios.get('https://api-stg.airdata.site/agent-api/airports-iata', {
+                    headers: {
+                        'Authorization': 'Bearer ff4e0cc0645821e2876be210541b7208'
+                    }
+                });
+
+                const airports = response.data.items;
+                const fromSelect = document.getElementById('from');
+                const toSelect = document.getElementById('to');
+
+                fromSelect.innerHTML = '<option value="">Select a location...</option>';
+                toSelect.innerHTML = '<option value="">Select a location...</option>';
+
+                airports.forEach(airport => {
+                    const option = `<option value="${airport.iata}">${airport.displayName} (${airport.iata})</option>`;
+                    fromSelect.innerHTML += option;
+                    toSelect.innerHTML += option;
+                });
+            } catch (error) {
+                console.error('Error loading airports:', error);
+            }
+        }
+
+        document.getElementById('search-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const from = document.getElementById('from').value;
+            const to = document.getElementById('to').value;
+            const departureDate = document.getElementById('departure').value;
+            const returnDate = document.getElementById('return').value;
+
+            try {
+                const response = await axios.post('https://api-stg.airdata.site/agent-api/search', {
+                    from: from,
+                    to: to,
+                    departureDate: departureDate,
+                    returnDate: returnDate,
+                    adults: 1,
+                    children: 0,
+                    infants: 0
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ff4e0cc0645821e2876be210541b7208'
+                    }
+                });
+
+                const data = response.data;
+                document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = '<p style="color:red;">Error: ' + error.message + '</p>';
+            }
+        });
+
+        // Load airports on page load
+        loadAirports();
+    </script>
+</body>
+</html>
